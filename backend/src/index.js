@@ -18,7 +18,7 @@ async function handle(req, res) {
         res.writeHead(200).end(
           JSON.stringify({
             message: "OK",
-            results: await searchOrgs(url.searchParams)
+            results: await searchOrgs(url.searchParams),
           })
         );
         break;
@@ -27,7 +27,7 @@ async function handle(req, res) {
         res.writeHead(200).end(
           JSON.stringify({
             message: "OK",
-            results: await searchFundings(url.searchParams)
+            results: await searchFundings(url.searchParams),
           })
         );
         break;
@@ -35,7 +35,7 @@ async function handle(req, res) {
       default:
         res.writeHead(404).end(
           JSON.stringify({
-            message: "Not Found"
+            message: "Not Found",
           })
         );
         break;
@@ -44,7 +44,7 @@ async function handle(req, res) {
     console.error(e.stack);
     res.writeHead(500).end(
       JSON.stringify({
-        message: "Something went wrong"
+        message: "Something went wrong",
       })
     );
   }
@@ -56,6 +56,8 @@ function buildSearchParams(index, queryParams) {
   const sortBy = queryParams.get("sort_by");
   const orderBy = queryParams.get("order_by");
   const query = queryParams.get("query");
+  const uuid = queryParams.get("uuid");
+  const companyUuid = queryParams.get("company_uuid");
 
   const searchParams = {
     index,
@@ -70,28 +72,47 @@ function buildSearchParams(index, queryParams) {
   }
 
   if (query) {
-    searchParams.q = query
+    searchParams.q = query;
   }
 
-  return searchParams
+  if (uuid) {
+    searchParams.body.query = {
+      match: {
+        _id: uuid,
+      },
+    };
+  }
+
+  return searchParams;
 }
 
 async function searchOrgs(queryParams) {
-  const searchParams = buildSearchParams('org', queryParams)
+  const searchParams = buildSearchParams("org", queryParams);
   const response = await client.search(searchParams);
 
   return {
-    hits: response.body.hits.hits.map(h => h._source),
-    total: response.body.hits.total.value
+    hits: response.body.hits.hits.map((h) => h._source),
+    total: response.body.hits.total.value,
   };
 }
 
 async function searchFundings(queryParams) {
-  const searchParams = buildSearchParams('funding', queryParams)
+  const companyUuid = queryParams.get("company_uuid");
+  const searchParams = buildSearchParams("funding", queryParams);
   const response = await client.search(searchParams);
 
+  let hits = response.body.hits.hits.map((h) => h._source);
+  let total = response.body.hits.total.value
+
+  // It's mostly like this index has company_uuid field as analyzed
+  // a query match or query terms is not working properly
+  if (companyUuid) {
+    hits = hits.filter((hit) => hit.company_uuid === companyUuid);
+    total = hits.length
+  }
+
   return {
-    hits: response.body.hits.hits.map(h => h._source),
-    total: response.body.hits.total.value
+    hits,
+    total,
   };
 }

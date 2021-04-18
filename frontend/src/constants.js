@@ -1,0 +1,3 @@
+export const TOP_COMPANIES_QUANTITY = 8;
+export const RECENT_FUNDINGS_QUANTITY = 50;
+export const MIN_CHARACTERS_FOR_SEARCHING = 3

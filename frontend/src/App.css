@@ -1,0 +1,17 @@
+@import "~antd/dist/antd.css";
+
+#root {
+  height: 100%;
+}
+
+.vertical-scrollable::-webkit-scrollbar {
+  width: 10px;
+}
+
+.ant-input {
+  background-color: transparent;
+}
+
+.ant-tag {
+  margin-right: 0;
+}

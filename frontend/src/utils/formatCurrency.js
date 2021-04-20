@@ -1,11 +1,12 @@
-const formatCurrency = (currency) => {
+const formatCurrency = (currency, isShort) => {
   const formatter = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-    maximumFractionDigits: 0,
+    maximumFractionDigits: isShort ? 1 : 0,
+    notation: isShort ? "compact" : "standard",
   });
 
   return formatter.format(currency);
 };
 
-export default formatCurrency
+export default formatCurrency;

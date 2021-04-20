@@ -4,7 +4,7 @@ import debounce from "just-debounce-it";
 import formatCurrency from "../utils/formatCurrency";
 import { MIN_CHARACTERS_FOR_SEARCHING } from "../constants";
 
-const useSearch = ({ setCurrenCompanyKey }) => {
+const useSearch = ({ setCurrentCompanyKey }) => {
   const [autocompleteValue, setAutocompleteValue] = useState(null);
   const [options, setOptions] = useState([]);
   const [optionsLoading, setOptionsLoading] = useState(false);
@@ -68,7 +68,7 @@ const useSearch = ({ setCurrenCompanyKey }) => {
   );
 
   const onSelect = (value, option) => {
-    setCurrenCompanyKey({ name: option.name, uuid: value });
+    setCurrentCompanyKey({ name: option.name, uuid: value });
     setAutocompleteValue(option.name);
   };
 

@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   SearchOutlined,
   UserOutlined,
-  HomeOutlined,
+  ShopOutlined,
   GlobalOutlined,
   LoadingOutlined,
+  DollarOutlined,
+  LeftOutlined,
 } from "@ant-design/icons";
 import {
   Layout,
@@ -16,7 +18,9 @@ import {
   Skeleton,
   Empty,
   Table,
+  Button,
 } from "antd";
+import { PieChart, Pie, Cell } from "recharts";
 
 import Currency from "./components/atoms/Currency";
 import DateFormat from "./components/atoms/DateFormat";
@@ -28,14 +32,22 @@ import useRecentFundings from "./hooks/useTopFundings";
 import useCurrentCompany from "./hooks/useCurrentCompany";
 import useSearch from "./hooks/useSearch";
 
-import { TOP_COMPANIES_QUANTITY, RECENT_FUNDINGS_QUANTITY } from "./constants";
+import {
+  TAG_NAMES,
+  TAG_COLORS,
+  TOP_COMPANIES_QUANTITY,
+  RECENT_FUNDINGS_QUANTITY,
+} from "./constants";
+import formatCurrency from "./utils/formatCurrency";
 
 import "./App.css";
+import FullReport from "./FullReport";
 
 const { Sider, Content } = Layout;
 const { Title, Paragraph, Link } = Typography;
 
 export default function App() {
+  const [showFullReport, setShowFullReport] = useState(false);
   const { topCompanies, topCompaniesLoading } = useTopCompanies(
     TOP_COMPANIES_QUANTITY
   );
@@ -45,7 +57,7 @@ export default function App() {
   );
 
   const {
-    setCurrenCompanyKey,
+    setCurrentCompanyKey,
     currentCompany,
     currentCompanyLoading,
   } = useCurrentCompany();
@@ -59,7 +71,7 @@ export default function App() {
     onSearch,
     onChange,
   } = useSearch({
-    setCurrenCompanyKey,
+    setCurrentCompanyKey,
   });
 
   const dataSource = currentCompany?.fundings;
@@ -69,33 +81,68 @@ export default function App() {
       title: "Date",
       dataIndex: "announced_on",
       key: "date",
+      width: "20%",
       render: (text) => <DateFormat>{text}</DateFormat>,
+      sorter: (a, b) =>
+        new Date(a.announced_on).getTime() - new Date(b.announced_on).getTime(),
     },
     {
       title: "Type",
       dataIndex: "investment_type",
       key: "type",
+      width: "10%",
       render: (text) => <Investment>{text}</Investment>,
+      sorter: (a, b) => {
+        if (a.investment_type > b.investment_type) {
+          return -1;
+        }
+
+        if (a.investment_type < b.investment_type) {
+          return 1;
+        }
+
+        return 0;
+      },
     },
     {
       title: "Amount",
       dataIndex: "raised_amount_usd",
       key: "amount",
+      width: "20%",
       render: (text) => <Currency>{text}</Currency>,
+      sorter: (a, b) => a.raised_amount_usd - b.raised_amount_usd,
     },
     {
       title: "Investors",
       dataIndex: "investor_names",
       key: "investors",
+      width: "30%",
       render: (text) =>
-        text
-          .replace("{", "")
-          .replaceAll('"', "")
-          .replace("}", "")
-          .split(",")
-          .join(", "),
+        text.replace(/[{}"]/g, "")
+          ? text.replace(/[{}"]/g, "").split(",").join(", ")
+          : "—",
     },
   ];
+
+  const getCharData = (fundings) => {
+    const fundingsTypes = [
+      ...new Set(fundings.map(({ investment_type }) => investment_type)),
+    ];
+
+    return fundingsTypes
+      .map((type) => {
+        const amount = fundings
+          .filter(({ investment_type }) => investment_type === type)
+          .reduce((prev, cur) => prev + Number(cur.raised_amount_usd), 0);
+
+        return { name: type, value: amount };
+      })
+      .filter(({ value }) => value !== 0);
+  };
+
+  const chartData = currentCompany?.fundings
+    ? getCharData(currentCompany?.fundings)
+    : [];
 
   return (
     <Layout style={{ height: "100%" }}>
@@ -152,7 +199,7 @@ export default function App() {
               type="secondary"
               style={{ textTransform: "uppercase" }}
             >
-              Top companies
+              <ShopOutlined /> Top companies
             </Title>
             {topCompaniesLoading &&
               [...Array(TOP_COMPANIES_QUANTITY)].map((n, index) => (
@@ -171,7 +218,9 @@ export default function App() {
                       cursor: "pointer",
                     }}
                     onClick={(function (name, uuid) {
-                      return (e) => setCurrenCompanyKey({ name, uuid });
+                      return (e) => {
+                        setCurrentCompanyKey({ name, uuid });
+                      };
                     })(org.company_name, org.uuid)}
                   >
                     <div
@@ -203,7 +252,7 @@ export default function App() {
               type="secondary"
               style={{ textTransform: "uppercase" }}
             >
-              Latest fundings
+              <DollarOutlined /> Latest fundings
             </Title>
             {recentFundingsLoading &&
               [...Array(RECENT_FUNDINGS_QUANTITY)].map((n, index) => (
@@ -222,7 +271,9 @@ export default function App() {
                       cursor: "pointer",
                     }}
                     onClick={(function (name, uuid) {
-                      return (e) => setCurrenCompanyKey({ name, uuid });
+                      return (e) => {
+                        setCurrentCompanyKey({ name, uuid });
+                      };
                     })(funding.company_name, funding.company_uuid)}
                   >
                     <div
@@ -272,20 +323,28 @@ export default function App() {
             {currentCompanyLoading && (
               <Skeleton avatar paragraph={{ rows: 4 }} active />
             )}
-            {!currentCompany && !currentCompanyLoading && (
+            {!showFullReport && !currentCompany && !currentCompanyLoading && (
               <div
                 style={{
                   height: "100%",
                   width: "100%",
                   display: "flex",
+                  flexDirection: "column",
                   justifyContent: "center",
                   alignItems: "center",
                 }}
               >
                 <Empty
                   image="/images/search.svg"
-                  description="Choose or search a company to see the details."
+                  description="Choose or search a company to see the details or"
                 />
+                <Button
+                  style={{ marginTop: 20 }}
+                  type="primary"
+                  onClick={() => setShowFullReport(true)}
+                >
+                  See the full report
+                </Button>
               </div>
             )}
             {currentCompany &&
@@ -308,6 +367,10 @@ export default function App() {
               )}
             {currentCompany?.org?.company_name && !currentCompanyLoading && (
               <div>
+                <Button style={{ marginBottom: 50 }} onClick={() => setCurrentCompanyKey(null)}>
+                  <LeftOutlined />
+                  Go back
+                </Button>
                 <div style={{ display: "flex", alignItems: "flex-start" }}>
                   <Logo
                     src={`//logo.clearbit.com/${currentCompany.org?.homepage_url}`}
@@ -316,13 +379,18 @@ export default function App() {
                     <Title level={2} style={{ marginBottom: 10 }}>
                       {currentCompany.org?.company_name}
                     </Title>
-                    <Paragraph style={{ marginBottom: 5, maxWidth: "60em" }}>
+                    <Paragraph
+                      style={{
+                        marginBottom: 10,
+                        maxWidth: "50em",
+                      }}
+                    >
                       {currentCompany.org?.short_description}
                     </Paragraph>
                     <div style={{ display: "flex" }}>
                       {currentCompany.org?.city && (
                         <Paragraph strong>
-                          <HomeOutlined /> {currentCompany.org?.city},{" "}
+                          <ShopOutlined /> {currentCompany.org?.city},{" "}
                           {currentCompany.org?.country_code}
                         </Paragraph>
                       )}
@@ -343,48 +411,85 @@ export default function App() {
                         </Link>
                       )}
                     </div>
-                    {currentCompany.org?.description && (
-                      <div style={{ marginTop: 20, maxWidth: "60em" }}>
-                        <Title level={4} strong>
-                          About
-                        </Title>
-                        <Paragraph>{currentCompany.org?.description}</Paragraph>
-                      </div>
-                    )}
-                    <div
-                      style={{ display: "flex", gap: "0 60px", marginTop: 30 }}
-                    >
-                      <div>
-                        <Title level={1} style={{ margin: 0 }}>
-                          <Currency>
-                            {currentCompany.org?.funding_total_usd}
-                          </Currency>
-                        </Title>
-                        <Paragraph>Total funding</Paragraph>
-                      </div>
-                      <div>
-                        <Title level={1} style={{ margin: 0 }}>
-                          {currentCompany.org?.funding_rounds}
-                        </Title>
-                        <Paragraph>Funding rounds</Paragraph>
-                      </div>
+                  </div>
+                </div>
+                {!!currentCompany.org?.description?.trim().length && (
+                  <div style={{ marginTop: 40, maxWidth: "60em" }}>
+                    <Title level={3} strong>
+                      About
+                    </Title>
+                    <Paragraph className="text-clamp">
+                      {currentCompany.org?.description}
+                    </Paragraph>
+                  </div>
+                )}
+                <div>
+                  <div
+                    style={{ display: "flex", gap: "0 60px", marginTop: 60 }}
+                  >
+                    <div>
+                      <Title level={1} style={{ margin: 0 }}>
+                        <Currency>
+                          {currentCompany.org?.funding_total_usd}
+                        </Currency>
+                      </Title>
+                      <Paragraph>Total funding</Paragraph>
                     </div>
-                    {!!currentCompany.fundings?.length && (
-                      <div
-                        className="table-container"
-                        style={{ marginTop: 50 }}
-                      >
+                    <div>
+                      <Title level={1} style={{ margin: 0 }}>
+                        {currentCompany.org?.funding_rounds}
+                      </Title>
+                      <Paragraph>Funding rounds</Paragraph>
+                    </div>
+                  </div>
+                </div>
+                {!!currentCompany.fundings?.length && (
+                  <div className="table-container" style={{ marginTop: 50 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start" }}>
+                      <div>
                         <div style={{ maxWidth: "60em" }}>
                           <Title level={4} strong>
                             Fundings
                           </Title>
                         </div>
-                        <Table dataSource={dataSource} columns={columns} />
+                        <Table
+                          style={{ width: 820 }}
+                          dataSource={dataSource}
+                          columns={columns}
+                          pagination={{ pageSize: 5 }}
+                        />
                       </div>
-                    )}
+                      <PieChart width={500} height={300}>
+                        <Pie
+                          minAngle={10}
+                          dataKey="value"
+                          data={chartData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={70}
+                          outerRadius={90}
+                          fill="#8884d8"
+                          label={({ name, value }) =>
+                            `${formatCurrency(value, true)} (${
+                              TAG_NAMES[name] || name
+                            })`
+                          }
+                        >
+                          {chartData.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={TAG_COLORS[entry.name] || "#64748B"}
+                            />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
+            )}
+            {!currentCompany && !currentCompanyLoading && showFullReport && (
+              <FullReport />
             )}
           </div>
         </Content>

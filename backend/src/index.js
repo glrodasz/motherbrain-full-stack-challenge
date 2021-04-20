@@ -3,7 +3,7 @@ const { URL } = require("url");
 const { Client } = require("@elastic/elasticsearch");
 
 const client = new Client({
-  node: process.env.ES_URL
+  node: process.env.ES_URL,
 });
 
 http.createServer(handle).listen(8080);
@@ -64,6 +64,9 @@ function buildSearchParams(index, queryParams) {
     body: {
       size: limit != null ? limit : 10,
       from: offset != null ? offset : 0,
+      query: {
+        exists: { field: "company_name" },
+      },
     },
   };
 
@@ -71,16 +74,12 @@ function buildSearchParams(index, queryParams) {
     searchParams.body.sort = [{ [sortBy]: orderBy || "asc" }];
   }
 
-  if (query) {
-    searchParams.q = query;
+  if (uuid) {
+    searchParams.body.query = { match: { _id: uuid } };
   }
 
-  if (uuid) {
-    searchParams.body.query = {
-      match: {
-        _id: uuid,
-      },
-    };
+  if (query) {
+    searchParams.q = query;
   }
 
   return searchParams;
@@ -96,19 +95,25 @@ async function searchOrgs(queryParams) {
   };
 }
 
+function filterByCompanyUuid(hits, companyUuid) {
+  const filteredHits = hits.filter((hit) => hit.company_uuid === companyUuid);
+
+  return {
+    hits: filteredHits,
+    total: filteredHits.length,
+  };
+}
+
 async function searchFundings(queryParams) {
   const companyUuid = queryParams.get("company_uuid");
   const searchParams = buildSearchParams("funding", queryParams);
   const response = await client.search(searchParams);
 
-  let hits = response.body.hits.hits.map((h) => h._source);
-  let total = response.body.hits.total.value
+  const hits = response.body.hits.hits.map((h) => h._source);
+  const total = response.body.hits.total.value;
 
-  // It's mostly like this index has company_uuid field as analyzed
-  // a query match or query terms is not working properly
   if (companyUuid) {
-    hits = hits.filter((hit) => hit.company_uuid === companyUuid);
-    total = hits.length
+    return filterByCompanyUuid(hits, companyUuid);
   }
 
   return {

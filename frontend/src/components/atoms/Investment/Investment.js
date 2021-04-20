@@ -3,14 +3,7 @@ import PropTypes from "prop-types";
 
 import { Tag } from "antd";
 
-const tagColor = {
-  seed: "#10B981",
-  series_a: "#0EA5E9",
-  series_b: "#6366F1",
-  series_c: "#8B5CF6",
-  series_d: "#EC4899",
-  series_e: "#F59E0B",
-};
+import { TAG_COLORS } from '../../../constants'
 
 const Investment = ({ children }) => {
   if (!children) {
@@ -18,7 +11,7 @@ const Investment = ({ children }) => {
   }
 
   return (
-    <Tag color={tagColor[children] || "#64748B"}>
+    <Tag color={TAG_COLORS[children] || "#64748B"}>
       {children.toUpperCase().replaceAll("_", " ")}
     </Tag>
   );

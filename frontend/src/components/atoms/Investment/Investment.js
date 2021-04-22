@@ -1,9 +1,8 @@
 import React from "react";
-import PropTypes from "prop-types";
 
 import { Tag } from "antd";
 
-import { TAG_COLORS } from '../../../constants'
+import { getFundingRoundColor } from "../../helpers";
 
 const Investment = ({ children }) => {
   if (!children) {
@@ -11,14 +10,10 @@ const Investment = ({ children }) => {
   }
 
   return (
-    <Tag color={TAG_COLORS[children] || "#64748B"}>
+    <Tag color={getFundingRoundColor(children)}>
       {children.toUpperCase().replaceAll("_", " ")}
     </Tag>
   );
-};
-
-Investment.propTypes = {
-  children: PropTypes.string,
 };
 
 Investment.defaultProps = {

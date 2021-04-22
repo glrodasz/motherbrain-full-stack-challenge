@@ -1,4 +1,6 @@
-export const TAG_COLORS = {
+export const DEFAULT_FUNDING_ROUND_COLOR = "#64748B";
+
+export const FUNDING_ROUNDS_COLORS = {
   seed: "#94A3B8",
   series_a: "#06B6D4",
   series_b: "#0EA5E9",
@@ -29,7 +31,7 @@ export const TAG_COLORS = {
   post_ipo_secondary: "#6366F1",
 };
 
-export const TAG_NAMES = {
+export const FUNDING_ROUNDS_NAMES = {
   seed: "SEED",
   series_a: "A",
   series_b: "B",

@@ -1,4 +1,4 @@
-const formatCurrency = (currency, isShort) => {
+const formatCurrency = (currency, { isShort } = {}) => {
   const formatter = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",

@@ -21,17 +21,7 @@ const columns = [
     key: "type",
     width: "10%",
     render: (text) => <Investment>{text}</Investment>,
-    sorter: (a, b) => {
-      if (a.investment_type > b.investment_type) {
-        return -1;
-      }
-
-      if (a.investment_type < b.investment_type) {
-        return 1;
-      }
-
-      return 0;
-    },
+    sorter: (a, b) => a.investment_type.localeCompare(b.investment_type),
   },
   {
     title: "Amount",

@@ -72,9 +72,9 @@ const FundingRoundsReport = ({ setCurrentCompanyKey, hideReport }) => {
             left: 0,
             bottom: 20,
           }}
-          onClick={({ activeLabel, activePayload }) => {
-            setFundingRoundData(activePayload[0]?.payload);
-            setCurrentDate(activeLabel);
+          onClick={(data) => {
+            setFundingRoundData(data?.activePayload[0]?.payload);
+            setCurrentDate(data?.activeLabel);
           }}
         >
           <CartesianGrid strokeDasharray="3 3" />

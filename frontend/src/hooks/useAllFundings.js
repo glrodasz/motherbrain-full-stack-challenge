@@ -19,7 +19,7 @@ const useAllFundings = () => {
     fetch(url)
       .then((response) => response.json())
       .then(({ results: { hits } }) => {
-        setFundings(fundings.concat(hits));
+        setFundings(prevState => prevState.concat(hits));
         setFundingsLoading(false);
 
         if (offset < TOTAL_RECORDS_LIMIT - MAX_READ_LIMIT) {

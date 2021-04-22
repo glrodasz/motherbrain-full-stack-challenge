@@ -16,7 +16,7 @@ const useTopCompanies = (quantity) => {
         setTopCompanies(hits);
         setTopCompaniesLoading(false);
       });
-  }, []);
+  }, [quantity]);
 
   return { topCompanies, topCompaniesLoading}
 };

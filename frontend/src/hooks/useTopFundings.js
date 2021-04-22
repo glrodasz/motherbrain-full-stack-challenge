@@ -17,7 +17,7 @@ const useRecentFundings = (quantity) => {
         setRecentFundings(hits);
         setRecentFundingsLoading(false);
       });
-  }, []);
+  }, [quantity]);
 
   return { recentFundings, recentFundingsLoading}
 };

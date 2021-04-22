@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { ShopOutlined, DollarOutlined, LeftOutlined } from "@ant-design/icons";
-import { Layout, Typography, Space, Skeleton, Empty, Button } from "antd";
+import { Layout, Space, Skeleton, Button } from "antd";
 
-import Currency from "./components/atoms/Currency";
-import FundingRoundsPieChart from "./components/molecules/FundingRoundsPieChart";
 import FundingsRoundsReport from "./components/organisms/FundingRoundsReport";
 import SearchBar from "./components/organisms/SearchBar/SearchBar";
 

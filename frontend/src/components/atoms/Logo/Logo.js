@@ -47,6 +47,7 @@ const Logo = ({ src }) => {
       <img
         style={{ width: "100%", height: "auto", objectFit: "contain" }}
         src={imageUrl}
+        alt="Company logo"
       ></img>
     </div>
   );

@@ -1,70 +1,144 @@
-import React from "react";
-import OrgTable from "./OrgTable";
+import React, { useState } from "react";
+import { ShopOutlined, DollarOutlined, LeftOutlined } from "@ant-design/icons";
+import { Layout, Space, Skeleton, Button } from "antd";
+
+import FundingsRoundsReport from "./components/organisms/FundingRoundsReport";
+import SearchBar from "./components/organisms/SearchBar/SearchBar";
+
+import useTopCompanies from "./hooks/useTopCompanies";
+import useRecentFundings from "./hooks/useTopFundings";
+import useCurrentCompany from "./hooks/useCurrentCompany";
+
+import Subtitle from "./components/atoms/Subtitle";
+import SideCard from "./components/organisms/SideCard";
+import EmptyState from "./components/molecules/EmptyState";
+import NoCompanyInfo from "./components/molecules/NoCompanyInfo";
+import CompanyHeader from "./components/molecules/CompanyHeader";
+import CompanyInfo from "./components/molecules/CompanyInfo";
+
+import { TOP_COMPANIES_QUANTITY, RECENT_FUNDINGS_QUANTITY } from "./constants";
+
+import "./App.css";
 
 export default function App() {
+  const [showFullReport, setShowFullReport] = useState(false);
+
+  const { topCompanies, topCompaniesLoading } = useTopCompanies(
+    TOP_COMPANIES_QUANTITY
+  );
+
+  const { recentFundings, recentFundingsLoading } = useRecentFundings(
+    RECENT_FUNDINGS_QUANTITY
+  );
+
+  const {
+    setCurrentCompanyKey,
+    currentCompany,
+    currentCompanyLoading,
+  } = useCurrentCompany();
+
   return (
-    <div className="App">
-      <h1>Hello, dear future Motherbrain developer!</h1>
-
-      <p>
-        This is a code test that is meant to test your creativity and problem
-        solving skills.
-      </p>
-
-      <p>
-        Don't panic! We won't judge you for hacky code, we simply want you to
-        solve a problem for us in any way you want.
-      </p>
-
-      <p>
-        This repository is a barebones setup with a Node backend and a React
-        frontend. If you really want to, you can tear it all down and start from
-        scratch, but this is meant to get you started immediately.
-      </p>
-
-      <h2>The Challenge</h2>
-
-      <p>
-        We have configured this repository with a connection to an ElasticSearch
-        node, with two prepopulated indices:
-      </p>
-
-      <ul>
-        <li>
-          <code>org</code> – A collection of organizations. Accessed via{" "}
-          <code>http://localhost:8080/orgs</code>.
-        </li>
-        <li>
-          <code>funding</code> – A collection of{" "}
-          <a href="https://techcrunch.com/2017/01/08/wtf-is-a-funding-round/">
-            funding rounds
-          </a>
-          . Accessed via <code>http://localhost:8080/fundings</code>.
-        </li>
-      </ul>
-
-      <p>
-        The code for these endpoints can be found in{" "}
-        <code>backend/src/index.js</code>.
-      </p>
-
-      <p>
-        We want you to{" "}
-        <strong>
-          explore and create a chart or graph of any aspect of the data. Use any
-          charting library you want or whip something up yourself if you prefer
-          that. Points for creativity, both in aesthetics and in data analysis.
-        </strong>
-      </p>
-
-      <p>
-        Here is a simple table version of the data. How will <em>you</em> make
-        it more fun?
-      </p>
-
-      <OrgTable />
-
-      <p style={{ color: "red" }}>Good Luck!</p>
-    </div>
+    <Layout style={{ height: "100%" }}>
+      <Layout.Sider
+        theme="light"
+        width={350}
+        style={{
+          backgroundColor: "#F1F5F9",
+          boxShadow:
+            "inset 0 4px 6px -1px rgba(0,0,0,0.1), inset 0 2px 4px -1px rgba(0,0,0,0.06)",
+        }}
+      >
+        <SearchBar setCurrentCompanyKey={setCurrentCompanyKey} />
+        <div
+          className="vertical-scrollable"
+          style={{
+            borderTop: "1px solid #E2E8F0",
+            maxHeight: "calc(100vh - 90px)",
+            overflowY: "scroll",
+            paddingBottom: 20,
+          }}
+        >
+          <div style={{ padding: "0 20px", marginTop: "30px" }}>
+            <Subtitle>
+              <ShopOutlined /> Top companies
+            </Subtitle>
+            {topCompaniesLoading &&
+              [...Array(TOP_COMPANIES_QUANTITY)].map((n, index) => (
+                <Skeleton key={index} active />
+              ))}
+            {!topCompaniesLoading && (
+              <Space size="middle" direction="vertical">
+                {topCompanies.map((org) => (
+                  <SideCard
+                    {...org}
+                    setCurrentCompanyKey={setCurrentCompanyKey}
+                  />
+                ))}
+              </Space>
+            )}
+          </div>
+          <div style={{ padding: "0 20px", marginTop: "30px" }}>
+            <Subtitle>
+              <DollarOutlined /> Latest fundings
+            </Subtitle>
+            {recentFundingsLoading &&
+              [...Array(RECENT_FUNDINGS_QUANTITY)].map((n, index) => (
+                <Skeleton key={index} active />
+              ))}
+            {!recentFundingsLoading && (
+              <Space size="middle" direction="vertical">
+                {recentFundings.map((funding) => (
+                  <SideCard
+                    {...funding}
+                    setCurrentCompanyKey={setCurrentCompanyKey}
+                  />
+                ))}
+              </Space>
+            )}
+          </div>
+        </div>
+      </Layout.Sider>
+      <Layout>
+        <Layout.Content style={{ backgroundColor: "#fff" }}>
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              padding: "50px 40px 30px",
+            }}
+          >
+            {currentCompanyLoading && (
+              <Skeleton avatar paragraph={{ rows: 4 }} active />
+            )}
+            {!showFullReport && !currentCompany && !currentCompanyLoading && (
+              <EmptyState setShowFullReport={setShowFullReport} />
+            )}
+            {currentCompany &&
+              currentCompany?.org?.company_name == null &&
+              !currentCompanyLoading && <NoCompanyInfo />}
+            {currentCompany?.org?.company_name && !currentCompanyLoading && (
+              <div>
+                <Button
+                  style={{ marginBottom: 50 }}
+                  onClick={() => setCurrentCompanyKey(null)}
+                >
+                  <LeftOutlined />
+                  Go back
+                </Button>
+                <CompanyHeader currentCompany={currentCompany} />
+                <CompanyInfo currentCompany={currentCompany} />
+              </div>
+            )}
+            {showFullReport && (
+              <FundingsRoundsReport
+                hideReport={currentCompanyLoading || currentCompany}
+                setCurrentCompanyKey={setCurrentCompanyKey}
+              />
+            )}
+          </div>
+        </Layout.Content>
+      </Layout>
+    </Layout>
   );
 }
